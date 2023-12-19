@@ -4,7 +4,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 
 import { configDotenv } from 'dotenv';
-import { log } from 'console';
+import moment from 'moment';
 configDotenv();
 
 const app = express();
@@ -14,27 +14,39 @@ app.use(bodyParser.json());
 app.use(cors());
 
 const pool = mysql.createPool({
-    host: process.env.HOST,
-    user: process.env.USER,
+    host: '127.0.0.1',
+    user: 'root',
     password: 'password',
-    database: 'world'
+    database: 'project1'
 }).promise();
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
 
-app.get('/country', async (req, res) => {
+app.post('/register', async (req, res) => {
+    const { username, password } = req.body;
+    const created = moment().format();
+    if (!username || !password) {
+        res.status(400).send('Username and password are required');
+    }
+
     const query = `
-    SELECT * FROM country;
-    `;
-    const [response] = await pool.query(query)
-    res.send(response)
+    INSERT INTO users (username, password, created)
+    VALUES (? , ? , ?)`;
+
+    await pool.query(query, [username, password, created]);
+})
+
+const postData = JSON.stringify({
+    username: 'testUser1',
+    password: 'testUser2',
 });
 
-app.get('/country/:name', async (req, res) => {
-    const name = req.params.name
-    const query = `select * from country where name like "${name}"`;
-    const [response] = await pool.query(query);
-    res.send(response);
-});
+fetch('http://localhost:8080/register', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: postData
+}).catch(err => console.error(err));

@@ -1,21 +1,39 @@
-import { useEffect, useState } from "react";
+import { useRef } from "react";
+import { useAppDispatch, useAppSelector } from "./store/hooks";
+import { handleUserRegistration } from "./store/slices/userAuth";
+
 
 const App = ()=>  {
-const [data, setData ] = useState<any>('');
+  const {
+    isLoading,
+    isError,
+    isFulfilled
+  } = useAppSelector(state => state.userAuth);
+  const dispatch = useAppDispatch();
+  const input = useRef({
+    username:'',
+    password:''
+  })
 
-useEffect(()=> {
-const fetchData = async () => {
-    const response = await fetch('http://localhost:8080/country/Bulgaria');
-    if(!response.ok) return;
-    const data = await response.json();
-    console.log(data)
-    setData(data);
-};
-fetchData();
-},[]);
   return (
     <div>
-     <h1>{data[0].Continent}</h1>
+      <form onSubmit={(e) => {
+        e.preventDefault()
+        dispatch(handleUserRegistration(
+          {
+            username: input.current.username,
+            password: input.current.password
+          }));
+      }}>
+        <input placeholder="username"
+        onChange={(e)=> input.current.username = e.target.value}
+        />
+        <input placeholder="password"
+        onChange={(e)=> input.current.password = e.target.value}
+        />
+      <button type="submit">click me</button>
+      </form>
+     {isLoading ? <h2>Loading</h2> : isError? <h2>error</h2> : isFulfilled && <h2>DONE</h2>}
     </div>
   );
 }
